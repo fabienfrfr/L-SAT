@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "l-sat"
+version = "0.1.0"
+description = ""
+authors = ["fabienfrfr <fabien.furfaro@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+tensorflow = "^2.18.0"
+pyomo = "^6.8.2"
+ortools = "^9.11.4210"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

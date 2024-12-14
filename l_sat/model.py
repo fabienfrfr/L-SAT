@@ -4,7 +4,9 @@
 Created on Sat Dec 14 20:57:42 2024
 @author: fabien
 """
+
 import tensorflow as tf
+#from ncps.tf import CfC  # Just test
 
 class SATSolver(tf.keras.Model):
     """
@@ -37,6 +39,19 @@ class OptimSolver(tf.keras.Model):
         for layer in self.hidden_layers:
             x = layer(x)
         return self.output_layer(x)
+
+class CfCSolver(tf.keras.Model):
+    """
+    Neural network model using the CfC architecture for both SAT and optimization problems.
+    (Doesn't work for last Keras version... not updated)
+    """
+    def __init__(self, problem_type='SAT', num_units=50):
+        super(CfCSolver, self).__init__()
+        self.problem_type = problem_type
+        self.cfc_model = CfC(num_units)  # Initialize the CfC model
+
+    def call(self, inputs):
+        return self.cfc_model(inputs)
 
 # Unit tests
 class TestNeuralNetworks(tf.test.TestCase):

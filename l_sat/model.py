@@ -10,19 +10,18 @@ import tensorflow as tf
 
 class LNNSolver(tf.keras.Model):
     """
-    Neural network model for SAT problems.
+    Neural network model for 3-SAT problems.
     """
-    def __init__(self, hidden_units=[64, 32]):
-        super(LNNSolver, self).__init__()
-        self.bidirectional_gru = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64, return_sequences=True))
-        self.hidden_layers = [tf.keras.layers.Dense(units, activation='relu') for units in hidden_units]
+    def __init__(self, hidden_dim=64, num_heads=4):
+        super().__init__()
+        self.clause_dense = tf.keras.layers.Dense(hidden_dim, activation='relu')
+        self.attention = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=hidden_dim)
         self.output_layer = tf.keras.layers.Dense(1, activation='sigmoid')
 
     def call(self, inputs):
-        x = self.bidirectional_gru(inputs)
-        for layer in self.hidden_layers:
-            x = layer(x)
-        return self.output_layer(x)
+        x = self.clause_dense(inputs)  # Encode clauses
+        x = self.attention(x, x)      # Apply attention across clauses
+        return self.output_layer(x)   # Output a value per clause
 
 class LCfCSolver(tf.keras.Model):
     """
@@ -38,4 +37,7 @@ class LCfCSolver(tf.keras.Model):
         return self.cfc_model(inputs)
 
 if __name__ == '__main__':
-    tf.test.main()
+    solver = LNNSolver()
+    data = tf.random.normal((2, 4, 3))  # Batch of size 2, 4 clauses per instance, 3 literals per clause
+    output = solver(data)
+    print("Output:", output.numpy())

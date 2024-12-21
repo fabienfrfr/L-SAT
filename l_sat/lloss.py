@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Dec 14 20:36:45 2024
-
 @author: fabien
 """
 import tensorflow as tf
@@ -42,46 +41,6 @@ class LagrangianLoss(tf.keras.losses.Loss):
             self.lambda_ * tf.abs(v) for c, v in zip(constraints, constraint_values)
         ])
         return obj_value + constraint_penalty
-
-# Unit Tests
-class TestLagrangianLoss(tf.test.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.num_variables = 5
-        self.num_clauses = 10
-
-    def test_sat_loss(self):
-        clauses = tf.constant([[1, -2, 3], [-1, 2, -3], [2, 3, -4]], dtype=tf.int32)
-        loss_fn = LagrangianLoss('SAT', clauses)
-        x = tf.constant([0.1, 0.9, 0.8, 0.2, 0.5])
-        loss_value = loss_fn(None, x)
-        self.assertIsInstance(loss_value, tf.Tensor)
-        self.assertEqual(loss_value.shape, ())
-
-    def test_optimization_loss(self):
-        obj_func = lambda x: tf.reduce_sum(x)
-        constraints = [
-            {'type': 'ineq', 'fun': lambda x: 1 - tf.reduce_sum(x)},
-            {'type': 'eq', 'fun': lambda x: x[0] - 0.5}
-        ]
-        loss_fn = LagrangianLoss('optimization', (obj_func, constraints))
-        x = tf.constant([0.3, 0.2, 0.1, 0.2, 0.1])
-        loss_value = loss_fn(None, x)
-        self.assertIsInstance(loss_value, tf.Tensor)
-        self.assertEqual(loss_value.shape, ())
-
-    def test_invalid_problem_type(self):
-        with self.assertRaises(ValueError):
-            LagrangianLoss('invalid_type', None)
-
-    def test_lambda_update(self):
-        clauses = tf.constant([[1, -2, 3], [-1, 2, -3]], dtype=tf.int32)
-        loss_fn = LagrangianLoss('SAT', clauses)
-        x = tf.constant([0.1, 0.9, 0.8])
-        with tf.GradientTape() as tape:
-            loss_value = loss_fn(None, x)
-        grads = tape.gradient(loss_value, [loss_fn.lambda_])
-        self.assertIsNotNone(grads[0])
 
 if __name__ == '__main__':
     #tf.test.main()

@@ -10,18 +10,24 @@ import tensorflow as tf
 
 class LNNSolver(tf.keras.Model):
     """
-    Neural network model for 3-SAT problems.
+    Neural network model for solving SAT and optimization problems.
     """
     def __init__(self, hidden_dim=64, num_heads=4):
         super().__init__()
-        self.clause_dense = tf.keras.layers.Dense(hidden_dim, activation='relu')
-        self.attention = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=hidden_dim)
-        self.output_layer = tf.keras.layers.Dense(1, activation='sigmoid')
+        # Define a sequential model for encoding input clauses or constraints
+        self.encoder = tf.keras.Sequential([
+            tf.keras.layers.Dense(hidden_dim, activation='relu'),  # Dense layer for initial processing
+            tf.keras.layers.MultiHeadAttention(num_heads, key_dim=hidden_dim),  # Attention layer
+            tf.keras.layers.Dense(hidden_dim, activation='relu')  # Another Dense layer
+        ])
+        self.var_generator = tf.keras.layers.Dense(1, activation='sigmoid')  # Output layer for variable values
 
-    def call(self, inputs):
-        x = self.clause_dense(inputs)  # Encode clauses
-        x = self.attention(x, x)      # Apply attention across clauses
-        return self.output_layer(x)   # Output a value per clause
+    def call(self, inputs, num_variables):
+        x = self.encoder(inputs)  # Encode the input
+        query = tf.ones((tf.shape(x)[0], num_variables, 1))  # Create a query tensor for attention
+        attention = tf.nn.softmax(tf.matmul(query, x, transpose_b=True), axis=-1)  # Compute attention weights
+        context = tf.matmul(attention, x)  # Apply attention to the encoded input
+        return self.var_generator(context)  # Generate variable values
 
 class LCfCSolver(tf.keras.Model):
     """
@@ -39,5 +45,5 @@ class LCfCSolver(tf.keras.Model):
 if __name__ == '__main__':
     solver = LNNSolver()
     data = tf.random.normal((2, 4, 3))  # Batch of size 2, 4 clauses per instance, 3 literals per clause
-    output = solver(data)
+    output = solver(data, 3)
     print("Output:", output.numpy())
